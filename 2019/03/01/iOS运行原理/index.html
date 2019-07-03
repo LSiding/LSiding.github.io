@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang>
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="以下是整理iOS的知识体系时收藏的网页书签，总结下以便后续学习。 注：以下内容可能包含转载文章  编译过程 认识Clang与LLVM Clang编译过程原理 LLVM LLVM使用 Bitcode LLDB使用篇 LLDB调试技巧 包大小分析-linkMap UUID、UDID、Keychain dSYM文件 签名证书机制 数字签名 理解 iOS 应用程序的代码签名机制   执行过程main函数之">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iOS运行原理">
+<meta property="og:url" content="http://yoursite.com/2019/03/01/iOS运行原理/index.html">
+<meta property="og:site_name" content="我的博客">
+<meta property="og:description" content="以下是整理iOS的知识体系时收藏的网页书签，总结下以便后续学习。 注：以下内容可能包含转载文章  编译过程 认识Clang与LLVM Clang编译过程原理 LLVM LLVM使用 Bitcode LLDB使用篇 LLDB调试技巧 包大小分析-linkMap UUID、UDID、Keychain dSYM文件 签名证书机制 数字签名 理解 iOS 应用程序的代码签名机制   执行过程main函数之">
+<meta property="og:locale" content="default">
+<meta property="og:updated_time" content="2019-07-03T13:27:50.695Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="iOS运行原理">
+<meta name="twitter:description" content="以下是整理iOS的知识体系时收藏的网页书签，总结下以便后续学习。 注：以下内容可能包含转载文章  编译过程 认识Clang与LLVM Clang编译过程原理 LLVM LLVM使用 Bitcode LLDB使用篇 LLDB调试技巧 包大小分析-linkMap UUID、UDID、Keychain dSYM文件 签名证书机制 数字签名 理解 iOS 应用程序的代码签名机制   执行过程main函数之">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/03/01/iOS运行原理/">
+
+
+
+
+
+  <title>iOS运行原理 | 我的博客</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="default">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">我的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/03/01/iOS运行原理/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="LSiding">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="我的博客">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">iOS运行原理</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2019-03-01T14:21:53+08:00">
+                2019-03-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>以下是整理iOS的知识体系时收藏的网页书签，总结下以便后续学习。</p>
+<p><strong>注：以下内容可能包含转载文章</strong></p>
+<hr>
+<h1 id="编译过程"><a href="#编译过程" class="headerlink" title="编译过程"></a>编译过程</h1><ul>
+<li><a href="https://www.jianshu.com/p/513a9bd35a7d" target="_blank" rel="noopener">认识Clang与LLVM</a></li>
+<li><a href="https://www.jianshu.com/p/c9fccc93ed15" target="_blank" rel="noopener">Clang编译过程原理</a></li>
+<li><a href="http://www.alonemonkey.com/2016/12/21/learning-llvm/" target="_blank" rel="noopener">LLVM</a></li>
+<li><a href="http://www.vienta.me/2014/06/11/你或许应该知道的LLVM/" target="_blank" rel="noopener">LLVM使用</a></li>
+<li><a href="https://help.apple.com/xcode/mac/current/#/devbbdc5ce4f" target="_blank" rel="noopener">Bitcode</a></li>
+<li><a href="http://www.dreamingwish.com/article/lldb-usage-a.html" target="_blank" rel="noopener">LLDB使用篇</a></li>
+<li><a href="https://www.jianshu.com/p/9a71329d5c4d" target="_blank" rel="noopener">LLDB调试技巧</a></li>
+<li><a href="https://dishibolei.github.io/2017/08/17/ios-linkmap/" target="_blank" rel="noopener">包大小分析-linkMap</a></li>
+<li><a href="https://www.jianshu.com/p/68b73c23f654" target="_blank" rel="noopener">UUID、UDID、Keychain</a></li>
+<li><a href="https://juejin.im/post/5adf15f2518825671775f3e1" target="_blank" rel="noopener">dSYM文件</a></li>
+<li><a href="https://juejin.im/entry/58ff10bf1b69e60058abb6b8" target="_blank" rel="noopener">签名证书机制</a></li>
+<li><a href="http://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html" target="_blank" rel="noopener">数字签名</a></li>
+<li><a href="https://github.com/xitu/gold-miner/blob/master/TODO/Understanding-code-signing-for-iOS-apps.md" target="_blank" rel="noopener">理解 iOS 应用程序的代码签名机制</a></li>
+</ul>
+<hr>
+<h1 id="执行过程"><a href="#执行过程" class="headerlink" title="执行过程"></a>执行过程</h1><h4 id="main函数之前"><a href="#main函数之前" class="headerlink" title="main函数之前"></a>main函数之前</h4><ul>
+<li><a href="https://www.jianshu.com/p/43db6b0aab8e" target="_blank" rel="noopener">iOS程序启动-&gt;dyld加载-&gt;runtime初始化(初识)</a></li>
+<li><a href="https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/MachOTopics/1-Articles/executing_files.html#//apple_ref/doc/uid/TP40001829-SW1" target="_blank" rel="noopener">Mach-O Files</a></li>
+<li><a href="https://blog.sunnyxx.com/2014/08/30/objc-pre-main/" target="_blank" rel="noopener">main 函数之前发生了什么</a></li>
+<li><a href="https://github.com/ming1016/study/wiki/Objc-Runtime" target="_blank" rel="noopener">Objc Runtime</a></li>
+<li><a href="http://www.enkichen.com/2017/04/21/ios-message-forwarding/" target="_blank" rel="noopener">iOS 运行时之消息转发机制</a></li>
+<li><a href="http://limbank.com/2018/03/02/post15/" target="_blank" rel="noopener">runtime原理与实践：消息转发篇</a></li>
+<li><a href="https://www.jianshu.com/p/dd425b9dc9db" target="_blank" rel="noopener">__attribute__((constructor))用法解析</a></li>
+<li><a href="http://www.jianshu.com/p/872447c6dc3f" target="_blank" rel="noopener">Objective-C 深入理解 +load 和 +initialize</a></li>
+<li><a href="http://www.cocoachina.com/ios/20170502/19163.html" target="_blank" rel="noopener">Category VS Extension 原理详解</a></li>
+</ul>
+<h4 id="main函数及之后"><a href="#main函数及之后" class="headerlink" title="main函数及之后"></a>main函数及之后</h4><ul>
+<li><a href="https://www.jianshu.com/p/f29b59f4c2b9" target="_blank" rel="noopener">iOS端启动速度优化</a></li>
+<li><a href="https://www.jianshu.com/p/89f69bed9ee3" target="_blank" rel="noopener">源码级 RunLoop 剖析</a></li>
+<li><a href="https://imlifengfeng.github.io/article/487/" target="_blank" rel="noopener">iOS RunLoop详解</a></li>
+<li><a href="https://blog.ibireme.com/2015/05/18/runloop/" target="_blank" rel="noopener">深入理解RunLoop</a></li>
+<li><a href="http://leonzlw.github.io/2016/06/02/NSTimer/" target="_blank" rel="noopener">NSTimer与RunLoop的那些事</a></li>
+</ul>
+<h4 id="生命周期"><a href="#生命周期" class="headerlink" title="生命周期"></a>生命周期</h4><ul>
+<li><a href="https://www.jianshu.com/p/aa50e5350852" target="_blank" rel="noopener">iOS应用程序的生命周期</a></li>
+<li><a href="https://www.jianshu.com/p/87f66304cdec" target="_blank" rel="noopener">loadView()和viewDidLoad()的区别</a></li>
+</ul>
+<hr>
+<h1 id="多线程"><a href="#多线程" class="headerlink" title="多线程"></a>多线程</h1><ul>
+<li><a href="https://zh.wikipedia.org/wiki/生产者消费者问题" target="_blank" rel="noopener">生产者消费者问题</a></li>
+</ul>
+<h4 id="同步工具"><a href="#同步工具" class="headerlink" title="同步工具"></a>同步工具</h4><ul>
+<li><a href="https://hongruqi.github.io/2016/07/23/iOS%20保证线程同步方式%20&%20性能对比/" target="_blank" rel="noopener">线程同步方式&amp;性能对比</a></li>
+<li><a href="https://www.jb51.net/article/127573.htm" target="_blank" rel="noopener">浅谈iOS中的锁的介绍及使用</a></li>
+<li><a href="https://dnduuhn.com/2018/12/11/iOS-多线编程之线程安全/" target="_blank" rel="noopener">iOS 多线编程之线程安全</a></li>
+<li><a href="http://liuduo.me/2018/02/08/objective-c-atomic/" target="_blank" rel="noopener">Objective-C 原子属性</a></li>
+<li><a href="http://www.uml.org.cn/mobiledev/201703313.asp" target="_blank" rel="noopener">深入理解 iOS 开发中的锁</a></li>
+</ul>
+<h4 id="实现方式"><a href="#实现方式" class="headerlink" title="实现方式"></a>实现方式</h4><ul>
+<li><a href="http://www.cocoachina.com/ios/20170707/19769.html" target="_blank" rel="noopener">iOS多线程全套</a></li>
+<li><a href="https://imlifengfeng.github.io/article/533/" target="_blank" rel="noopener">iOS多线程详解</a></li>
+<li><a href="https://dnduuhn.com/2018/12/02/iOS-多线程编程知识整理/" target="_blank" rel="noopener">iOS 多线程编程知识整理</a></li>
+<li><a href="http://alex1212112.github.io/ios/2015/11/24/dispatch-source.html" target="_blank" rel="noopener">Dispatch Source</a></li>
+<li><a href="https://www.itread01.com/articles/1476425757.html" target="_blank" rel="noopener">Dispatch Source Timer</a></li>
+<li><a href="https://www.jianshu.com/p/c167ca4d1e7e" target="_blank" rel="noopener">iOS定时器，你真的会使用吗？</a></li>
+</ul>
+<hr>
+<h1 id="数据持久化"><a href="#数据持久化" class="headerlink" title="数据持久化"></a>数据持久化</h1><ul>
+<li><a href="https://www.jianshu.com/p/7616cbd72845" target="_blank" rel="noopener">数据持久化方案</a></li>
+<li><a href="https://www.jianshu.com/p/880dd63c5f5e" target="_blank" rel="noopener">CoreData数据库</a></li>
+<li><a href="https://blog.methodname.com/ios-coredatajian-dan-shi-yong-jiao-cheng/" target="_blank" rel="noopener">iOS coreData简单使用教程</a></li>
+<li><a href="http://blog.devtang.com/2016/08/04/i-do-not-like-core-data/" target="_blank" rel="noopener">我为什么不喜欢 Core Data</a></li>
+</ul>
+<h4 id="SQLite"><a href="#SQLite" class="headerlink" title="SQLite"></a>SQLite</h4><ul>
+<li><a href="https://zhuanlan.zhihu.com/p/27700617" target="_blank" rel="noopener">平衡二叉树、B树、B+树、B*树</a></li>
+<li><a href="https://www.cnblogs.com/wade-luffy/p/6292784.html" target="_blank" rel="noopener">B+树</a></li>
+<li><a href="https://www.cnblogs.com/huahuahu/p/sqlite-suo-yin-de-yuan-li-ji-ying-yong.html" target="_blank" rel="noopener">sqlite索引的原理</a></li>
+<li><a href="https://www.kancloud.cn/kangdandan/sqlite/64326" target="_blank" rel="noopener">SQLite入门与分析</a></li>
+<li><a href="https://www.jianshu.com/p/6a3cb84e8e9a" target="_blank" rel="noopener">SQLite的原子提交及WAL日志模式</a></li>
+<li><a href="https://github.com/LeoMobileDeveloper/Blogs/blob/master/Basic/Sqlite-Basic.md" target="_blank" rel="noopener">SQLite使用</a></li>
+<li><a href="https://github.com/LeoMobileDeveloper/Blogs/blob/master/Basic/Sqlite的事务%2C锁和WAL模式.md" target="_blank" rel="noopener">Sqlite的事务,锁和WAL模式</a></li>
+<li><a href="https://github.com/WeMobileDev/article/blob/master/微信iOS%20SQLite源码优化实践.md" target="_blank" rel="noopener">微信iOS SQLite源码优化实践</a></li>
+<li><a href="https://github.com/WeMobileDev/article/blob/master/微信移动端数据库组件WCDB系列（二）%20—%20数据库修复三板斧.md" target="_blank" rel="noopener">微信移动端数据库组件WCDB系列（二） — 数据库修复三板斧</a></li>
+<li><a href="https://www.jianshu.com/p/665ae5ed36ec" target="_blank" rel="noopener">Sqlite 数据库服务层优化过程</a></li>
+<li><a href="https://cloud.tencent.com/developer/article/1342335" target="_blank" rel="noopener">数据库性能优化之SQL语句优化</a></li>
+</ul>
+<hr>
+<h1 id="内存管理"><a href="#内存管理" class="headerlink" title="内存管理"></a>内存管理</h1><ul>
+<li><a href="https://www.cnblogs.com/stevenwuzheng/p/5501266.html" target="_blank" rel="noopener">关于OC中对象与指针的思考</a></li>
+<li><a href="https://blog.csdn.net/Cloudox_/article/details/55100239" target="_blank" rel="noopener">iOS中assign、retain、copy、weak、strong的区别以及nonatomic的含义</a></li>
+<li><a href="https://elliotsomething.github.io/2016/05/17/iOS之内存那些你不知道的事/" target="_blank" rel="noopener">iOS之内存那些你不知道的事</a></li>
+<li><a href="https://www.cnblogs.com/houzhitong/p/4917579.html" target="_blank" rel="noopener">黑幕背后的Autorelease</a></li>
+<li><a href="https://fanxiushan.github.io/2018/01/15/AutoreleasePool-理解/" target="_blank" rel="noopener">AutoreleasePool 理解</a></li>
+<li><a href="http://tutuge.me/2015/03/17/what-is-autoreleasepool/" target="_blank" rel="noopener">@autoreleasepool-内存的分配与释放</a></li>
+</ul>
+<hr>
+<h1 id="网络编程"><a href="#网络编程" class="headerlink" title="网络编程"></a>网络编程</h1><ul>
+<li><a href="https://github.com/LeoMobileDeveloper/Blogs/blob/master/Basic/NetworkAndEncrpyt.md" target="_blank" rel="noopener">网络分层</a></li>
+<li><a href="http://www.ruanyifeng.com/blog/2012/05/internet_protocol_suite_part_i.html" target="_blank" rel="noopener">互联网协议入门（一）</a></li>
+<li><a href="http://www.ruanyifeng.com/blog/2012/06/internet_protocol_suite_part_ii.html" target="_blank" rel="noopener">互联网协议入门（二）</a></li>
+<li><a href="http://blog.percymong.com/articles/protocol-http/" target="_blank" rel="noopener">HTTP 协议详解</a></li>
+<li><a href="https://blog.csdn.net/tennysonsky/article/details/44562435" target="_blank" rel="noopener">如何理解HTTP协议的 “无连接，无状态” 特点？</a></li>
+<li><a href="https://www.jianshu.com/p/0dd08712c649" target="_blank" rel="noopener">iOS-网络编程(一)HTTP协议</a></li>
+<li><a href="https://www.jianshu.com/p/d833ac6fa5ab" target="_blank" rel="noopener">使用NSURLSession或者AFN发送HTTPS请求</a></li>
+<li><a href="https://www.jianshu.com/p/78964aac72d5" target="_blank" rel="noopener">iOS-网络编程(二)文件上传和断点离线下载</a></li>
+<li><a href="http://www.ruanyifeng.com/blog/2016/11/byte-order.html" target="_blank" rel="noopener">理解字节序</a></li>
+</ul>
+<h4 id="TCP、UDP"><a href="#TCP、UDP" class="headerlink" title="TCP、UDP"></a>TCP、UDP</h4><ul>
+<li><a href="https://www.jianshu.com/p/b71ec62b6eb5" target="_blank" rel="noopener">TCP数据的传输过程</a></li>
+<li><a href="https://www.jianshu.com/p/bbb6261cb13e" target="_blank" rel="noopener">为什么TCP需要三次握手和四次挥手</a></li>
+<li><a href="https://www.jianshu.com/p/cc756016243b" target="_blank" rel="noopener">深入浅出－iOS的TCP/IP协议族剖析&amp;&amp;Socket</a></li>
+<li><a href="https://296245482.github.io/2018/05/08/TCP:UDP实现可靠的传输/" target="_blank" rel="noopener">TCP/UDP &amp; 可靠的传输</a></li>
+<li><a href="http://www.52im.net/thread-1493-1-1.html" target="_blank" rel="noopener">聊聊iOS中网络编程长连接的那些事</a></li>
+</ul>
+<h4 id="Socket"><a href="#Socket" class="headerlink" title="Socket"></a>Socket</h4><ul>
+<li><a href="https://www.itcodemonkey.com/article/8293.html" target="_blank" rel="noopener">漫话：如何给女朋友解释什么是Linux的五种IO模型？</a></li>
+<li><a href="https://www.iminho.me/wiki/blog-23.html" target="_blank" rel="noopener">IO多路复用原理剖析</a></li>
+<li><a href="https://www.cnblogs.com/wenqiang/p/5510367.html" target="_blank" rel="noopener">网络编程之非阻塞connect编写</a></li>
+<li><a href="https://www.jianshu.com/p/4e3604ee4557" target="_blank" rel="noopener">iOS中Socket开发–UDP篇</a></li>
+<li><a href="https://oliverqueen.cn/2018/01/23/CFNetwork的介绍和使用/" target="_blank" rel="noopener">CFNetwork的介绍和使用</a></li>
+<li><a href="http://www.cnblogs.com/huliangwen/p/5470079.html" target="_blank" rel="noopener">iOS 网络编程：socket &amp; CFStream</a></li>
+<li><a href="https://www.jianshu.com/p/9353105a9129" target="_blank" rel="noopener">iOS 开发之CFSocket</a></li>
+</ul>
+<h4 id="网络安全"><a href="#网络安全" class="headerlink" title="网络安全"></a>网络安全</h4><ul>
+<li><a href="http://www.ruanyifeng.com/blog/2014/02/ssl_tls.html" target="_blank" rel="noopener">SSL/TLS协议运行机制的概述</a></li>
+<li><a href="https://cloud.tencent.com/developer/article/1037204" target="_blank" rel="noopener">iOS使用自签名证书实现HTTPS请求</a></li>
+<li><a href="https://chuansongme.com/n/2649334852044?jdfwkey=8txon" target="_blank" rel="noopener">如何用 Charles 抓 HTTPS 的包</a></li>
+<li><a href="https://www.jianshu.com/p/738427a4d369" target="_blank" rel="noopener">SSL Pinning技术 - 提高iOS网络安全性</a></li>
+<li><a href="http://southpeak.github.io/2015/09/14/app-transport-security-ats/" target="_blank" rel="noopener">App Transport Security(ATS)</a></li>
+</ul>
+<hr>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/01/31/iOS基础知识/" rel="next" title="iOS基础知识">
+                <i class="fa fa-chevron-left"></i> iOS基础知识
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">LSiding</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#编译过程"><span class="nav-number">1.</span> <span class="nav-text">编译过程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#执行过程"><span class="nav-number">2.</span> <span class="nav-text">执行过程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#main函数之前"><span class="nav-number">2.0.0.1.</span> <span class="nav-text">main函数之前</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#main函数及之后"><span class="nav-number">2.0.0.2.</span> <span class="nav-text">main函数及之后</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#生命周期"><span class="nav-number">2.0.0.3.</span> <span class="nav-text">生命周期</span></a></li></ol></li></ol><li class="nav-item nav-level-1"><a class="nav-link" href="#多线程"><span class="nav-number">3.</span> <span class="nav-text">多线程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#同步工具"><span class="nav-number">3.0.0.1.</span> <span class="nav-text">同步工具</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实现方式"><span class="nav-number">3.0.0.2.</span> <span class="nav-text">实现方式</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#数据持久化"><span class="nav-number">4.</span> <span class="nav-text">数据持久化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#SQLite"><span class="nav-number">4.0.0.1.</span> <span class="nav-text">SQLite</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#内存管理"><span class="nav-number">5.</span> <span class="nav-text">内存管理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#网络编程"><span class="nav-number">6.</span> <span class="nav-text">网络编程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#TCP、UDP"><span class="nav-number">6.0.0.1.</span> <span class="nav-text">TCP、UDP</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Socket"><span class="nav-number">6.0.0.2.</span> <span class="nav-text">Socket</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#网络安全"><span class="nav-number">6.0.0.3.</span> <span class="nav-text">网络安全</span></a></li></ol></li></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">LSiding</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
